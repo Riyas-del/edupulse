@@ -1,0 +1,20 @@
+{
+  "appId": "com.edupulse.app",
+  "appName": "EduPulse",
+  "webDir": "frontend",
+  "bundledWebRuntime": false,
+  "server": {
+    "url": "http://192.168.12.87:8000",
+    "cleartext": true
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_icon_config_sample",
+      "iconColor": "#6366F1",
+      "sound": "alarm.wav"
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    }
+  }
+}
