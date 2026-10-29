@@ -7,9 +7,11 @@ on:
 
 jobs:
   build-apk:
+    name: Generate Android APK
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
@@ -18,16 +20,19 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Set up Gradle 8.5
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.5'
 
-      - name: Build Debug APK
+      - name: Build Android Debug APK
         run: |
           cd android
-          gradle assembleDebug
+          gradle assembleDebug --stacktrace
 
-      - name: Upload EduPulse APK
+      - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: edupulse-debug.apk
+          name: EduPulse-Android-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
