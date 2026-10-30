@@ -1,9 +1,15 @@
 import os
+import sys
 import json
 import asyncio
 from datetime import datetime, timedelta, date
 from typing import Optional, List, Dict, Any
 from contextlib import asynccontextmanager
+
+# Ensure backend directory is in sys.path when imported from root
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+if BACKEND_DIR not in sys.path:
+    sys.path.insert(0, BACKEND_DIR)
 
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Query, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
