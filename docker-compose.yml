@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  edupulse:
+    build: .
+    container_name: edupulse-app
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/edupulse.db:/app/backend/edupulse.db
+      - ./uploads:/app/uploads
+    environment:
+      - PORT=8000
+    restart: unless-stopped

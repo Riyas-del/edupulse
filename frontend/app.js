@@ -9,6 +9,15 @@ let allSubjects = [];
 let weeklyChartInstance = null;
 let subjectChartInstance = null;
 
+// Dynamic API Base URL (supports web server, local network, and file:/// Android WebView)
+const API_BASE = (window.location.protocol.startsWith('http'))
+  ? ''
+  : (localStorage.getItem('edupulse_backend_url') || 'http://192.168.12.87:8000');
+
+function apiUrl(path) {
+  return `${API_BASE}${path}`;
+}
+
 // Timer State
 let timerMode = 'pomodoro'; // pomodoro, shortBreak, longBreak, stopwatch
 let timerSeconds = 25 * 60;
@@ -198,7 +207,7 @@ function switchTab(tabId) {
 // ============================================================================
 async function loadDashboard() {
   try {
-    const res = await fetch('/api/dashboard');
+    const res = await fetch(apiUrl('/api/dashboard'));
     dashboardData = await res.json();
 
     // Render Metrics
@@ -446,7 +455,7 @@ function renderDashboardProjects(projects) {
 // ============================================================================
 async function loadTimetable() {
   try {
-    const res = await fetch('/api/timetable');
+    const res = await fetch(apiUrl('/api/timetable'));
     const scheduleByDay = await res.json();
     filterTimetableDay(0, scheduleByDay);
   } catch (err) {
@@ -469,7 +478,7 @@ async function filterTimetableDay(dayIndex, cachedSchedule = null) {
 
   let schedule = cachedSchedule;
   if (!schedule) {
-    const res = await fetch('/api/timetable');
+    const res = await fetch(apiUrl('/api/timetable'));
     schedule = await res.json();
   }
 
@@ -510,7 +519,7 @@ async function filterTimetableDay(dayIndex, cachedSchedule = null) {
 // ============================================================================
 async function loadTasks() {
   try {
-    const res = await fetch('/api/tasks');
+    const res = await fetch(apiUrl('/api/tasks'));
     const tasks = await res.json();
     renderTasksList(tasks);
     renderTasksKanban(tasks);
@@ -696,7 +705,7 @@ async function saveTimerSession() {
   const subjectId = subSelect ? subSelect.value : null;
 
   try {
-    await fetch('/api/study/session', {
+    await fetch(apiUrl('/api/study/session'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -717,7 +726,7 @@ async function saveTimerSession() {
 
 async function loadStudyStats() {
   try {
-    const res = await fetch('/api/study/stats');
+    const res = await fetch(apiUrl('/api/study/stats'));
     const data = await res.json();
 
     // Render Weekly Bar Chart
@@ -844,7 +853,7 @@ function filterNotifs(cat) {
 }
 
 async function markAllNotificationsAsRead() {
-  await fetch('/api/notifications/mark-all-read', { method: 'POST' });
+  await fetch(apiUrl('/api/notifications/mark-all-read', { method: 'POST' }));
   loadNotifications();
   loadDashboard();
   showToast('All notifications marked as read', 'success');
@@ -865,7 +874,7 @@ async function resolveNotification(id) {
 }
 
 async function triggerEngineTick() {
-  const res = await fetch('/api/reminder-engine/trigger', { method: 'POST' });
+  const res = await fetch(apiUrl('/api/reminder-engine/trigger', { method: 'POST' }));
   const data = await res.json();
   showToast('Reminder Engine evaluated all academic rules!', 'info');
   loadNotifications();
@@ -877,7 +886,7 @@ async function triggerEngineTick() {
 // ============================================================================
 async function loadSubjectsManagement() {
   try {
-    const res = await fetch('/api/subjects');
+    const res = await fetch(apiUrl('/api/subjects'));
     allSubjects = await res.json();
 
     const container = document.getElementById('subjects-management-grid');
@@ -929,7 +938,7 @@ async function loadSubjectsManagement() {
 // ============================================================================
 async function loadLibrary() {
   try {
-    const res = await fetch('/api/library');
+    const res = await fetch(apiUrl('/api/library'));
     const library = await res.json();
 
     const container = document.getElementById('library-hierarchy-container');
@@ -1007,7 +1016,7 @@ function closeModal(id) {
 
 async function populateSubjectDropdowns() {
   try {
-    const res = await fetch('/api/subjects');
+    const res = await fetch(apiUrl('/api/subjects'));
     const subjects = await res.json();
     const options = subjects.map((s) => `<option value="${s.id}">${s.code} - ${s.name}</option>`).join('');
 
@@ -1049,7 +1058,7 @@ async function submitQuickAssignment(e) {
     description: document.getElementById('qa-asg-desc').value
   };
 
-  await fetch('/api/assignments', {
+  await fetch(apiUrl('/api/assignments'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -1070,7 +1079,7 @@ async function submitQuickTask(e) {
     due_date: document.getElementById('qa-task-date').value
   };
 
-  await fetch('/api/tasks', {
+  await fetch(apiUrl('/api/tasks'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -1092,7 +1101,7 @@ async function submitQuickExam(e) {
     start_time: document.getElementById('qa-exam-time').value
   };
 
-  await fetch('/api/exams', {
+  await fetch(apiUrl('/api/exams'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -1163,7 +1172,7 @@ async function submitCSVImport() {
   formData.append('file_type', fileType);
   formData.append('content', content);
 
-  const res = await fetch('/api/integration/import-csv', {
+  const res = await fetch(apiUrl('/api/integration/import-csv'), {
     method: 'POST',
     body: formData
   });
