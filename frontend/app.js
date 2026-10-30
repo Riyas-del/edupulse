@@ -12,11 +12,137 @@ let subjectChartInstance = null;
 // Dynamic API Base URL (supports web server, local network, and file:/// Android WebView)
 const API_BASE = (window.location.protocol.startsWith('http'))
   ? ''
-  : (localStorage.getItem('edupulse_backend_url') || 'http://192.168.12.87:8000');
+  : (localStorage.getItem('edupulse_backend_url') || 'https://edupulse-4sft.onrender.com');
 
 function apiUrl(path) {
   return `${API_BASE}${path}`;
 }
+
+// User Authentication State
+let currentUser = JSON.parse(localStorage.getItem('edupulse_user') || JSON.stringify({
+  id: 'demo-student',
+  email: 'alex.chen@nit.edu',
+  full_name: 'Alex Chen',
+  college_name: 'National Institute of Technology',
+  department: 'Computer Science & Engineering',
+  current_semester: 'Semester 5'
+}));
+
+function openLoginModal() {
+  const modal = document.getElementById('modal-auth');
+  if (modal) modal.classList.remove('hidden');
+  updateAuthUI();
+}
+
+function updateAuthUI() {
+  const profileName = document.getElementById('sidebar-student-name');
+  const profileSub = document.getElementById('sidebar-student-sub');
+  const authStatus = document.getElementById('auth-status-banner');
+  const headerUserBtn = document.getElementById('header-user-btn');
+
+  if (currentUser) {
+    if (profileName) profileName.innerText = currentUser.full_name || 'Alex Chen';
+    if (profileSub) profileSub.innerText = `${currentUser.department ? currentUser.department.split(' ')[0] : 'B.Tech'} • ${currentUser.current_semester || 'Sem 5'}`;
+    if (headerUserBtn) headerUserBtn.innerText = currentUser.full_name ? currentUser.full_name.split(' ')[0] : 'Demo Account';
+    if (authStatus) {
+      authStatus.innerHTML = `
+        <div class="flex items-center justify-between p-3 bg-purple-950/60 border border-purple-800/80 rounded-xl">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-cyan-400 flex items-center justify-center font-bold text-xs text-white">
+              ${(currentUser.full_name || 'A').charAt(0)}
+            </div>
+            <div>
+              <p class="text-xs font-bold text-white">${currentUser.full_name} <span class="text-[10px] text-cyan-400 font-semibold">(Active)</span></p>
+              <p class="text-[10px] text-slate-400">${currentUser.email}</p>
+            </div>
+          </div>
+          <button type="button" onclick="logout()" class="px-2.5 py-1 text-[11px] font-semibold rounded-lg bg-red-950/80 hover:bg-red-900 border border-red-700/60 text-red-300 transition">
+            Sign Out
+          </button>
+        </div>
+      `;
+    }
+  }
+}
+
+async function quickDemoLogin() {
+  try {
+    const res = await fetch(apiUrl('/api/auth/login'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'alex.chen@nit.edu', password: 'StudyGuard@2026' })
+    });
+    const data = await res.json();
+    currentUser = data.user;
+    localStorage.setItem('edupulse_user', JSON.stringify(currentUser));
+    localStorage.setItem('edupulse_token', data.token);
+    
+    closeModal('modal-auth');
+    showToast(data.message || 'Logged in as Alex Chen!', 'success');
+    updateAuthUI();
+    playAlarmTone('chime');
+    if (window.confetti) window.confetti();
+    loadDashboard();
+  } catch (err) {
+    console.error('Login error:', err);
+    currentUser = {
+      id: 'demo-student',
+      email: 'alex.chen@nit.edu',
+      full_name: 'Alex Chen',
+      college_name: 'National Institute of Technology',
+      department: 'Computer Science & Engineering',
+      current_semester: 'Semester 5'
+    };
+    localStorage.setItem('edupulse_user', JSON.stringify(currentUser));
+    closeModal('modal-auth');
+    showToast('Logged in as Alex Chen (Demo Session)!', 'success');
+    updateAuthUI();
+    loadDashboard();
+  }
+}
+
+async function submitLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+
+  try {
+    const res = await fetch(apiUrl('/api/auth/login'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    currentUser = data.user;
+    localStorage.setItem('edupulse_user', JSON.stringify(currentUser));
+    localStorage.setItem('edupulse_token', data.token);
+    
+    closeModal('modal-auth');
+    showToast(data.message || 'Logged in successfully!', 'success');
+    updateAuthUI();
+    playAlarmTone('chime');
+    loadDashboard();
+  } catch (err) {
+    showToast('Login failed. Please check network connection.', 'error');
+  }
+}
+
+function logout() {
+  localStorage.removeItem('edupulse_token');
+  currentUser = {
+    id: 'guest',
+    email: 'guest@edupulse.app',
+    full_name: 'Guest Student',
+    college_name: 'College',
+    department: 'General',
+    current_semester: 'Semester 1'
+  };
+  localStorage.setItem('edupulse_user', JSON.stringify(currentUser));
+  updateAuthUI();
+  showToast('Signed out. Switched to guest view.', 'info');
+  closeModal('modal-auth');
+}
+
 
 // Timer State
 let timerMode = 'pomodoro'; // pomodoro, shortBreak, longBreak, stopwatch
@@ -1269,6 +1395,7 @@ function startLiveClock() {
 // ============================================================================
 window.addEventListener('DOMContentLoaded', () => {
   startLiveClock();
+  updateAuthUI();
   loadDashboard();
   populateSubjectDropdowns();
 

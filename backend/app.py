@@ -117,6 +117,72 @@ class SettingsUpdate(BaseModel):
     in_app_sound: Optional[bool] = True
     browser_push: Optional[bool] = True
 
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
+class SignupRequest(BaseModel):
+    email: str
+    password: str
+    full_name: str
+    college_name: Optional[str] = "National Institute of Technology"
+    department: Optional[str] = "Computer Science & Engineering"
+    semester: Optional[str] = "Semester 5"
+
+# ============================================================================
+# 0. AUTHENTICATION & DEMO ACCOUNTS
+# ============================================================================
+@app.post("/api/auth/login")
+def login(creds: LoginRequest):
+    email = creds.email.strip().lower()
+    
+    # Demo credentials verification
+    if email in ["alex.chen@nit.edu", "demo@edupulse.app", "demo", "alex"]:
+        return {
+            "token": "demo-jwt-token-alex-chen",
+            "user": {
+                "id": "demo-student",
+                "email": "alex.chen@nit.edu",
+                "full_name": "Alex Chen",
+                "college_name": "National Institute of Technology",
+                "department": "Computer Science & Engineering",
+                "current_semester": "Semester 5"
+            },
+            "message": "Welcome back, Alex Chen! Demo profile loaded."
+        }
+
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM profiles WHERE lower(email) = ?", (email,))
+    user = cursor.fetchone()
+    conn.close()
+
+    if user:
+        return {
+            "token": f"token-{user['id']}",
+            "user": dict(user),
+            "message": f"Welcome back, {user['full_name']}!"
+        }
+
+    # Default to student account
+    return {
+        "token": "demo-jwt-token-alex-chen",
+        "user": {
+            "id": "demo-student",
+            "email": email,
+            "full_name": email.split("@")[0].title(),
+            "college_name": "National Institute of Technology",
+            "department": "Computer Science & Engineering",
+            "current_semester": "Semester 5"
+        },
+        "message": f"Logged in as {email}"
+    }
+
+@app.post("/api/auth/logout")
+def logout():
+    return {"message": "Logged out successfully."}
+
+
 # ============================================================================
 # 1. DASHBOARD & ACTION REQUIRED
 # ============================================================================

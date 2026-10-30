@@ -24,7 +24,7 @@ import androidx.core.content.ContextCompat;
 public class MainActivity extends AppCompatActivity {
 
     private WebView webView;
-    private static final String ONLINE_URL = "http://192.168.12.87:8000";
+    private static final String ONLINE_URL = "https://edupulse-4sft.onrender.com";
     private static final String OFFLINE_URL = "file:///android_asset/index.html";
     private static final int NOTIFICATION_PERMISSION_CODE = 101;
 
