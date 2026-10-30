@@ -25,6 +25,11 @@ jobs:
         with:
           gradle-version: '8.5'
 
+      - name: Configure Android SDK
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
       - name: Build Android Debug APK
         run: |
           cd android
